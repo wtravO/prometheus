@@ -14,11 +14,18 @@
 package discovery
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 )
+
+func unmarshalStrict(in []byte, out interface{}) error {
+	dec := yaml.NewDecoder(bytes.NewReader(in))
+	dec.KnownFields(true)
+	return dec.Decode(out)
+}
 
 func TestConfigsCustomUnMarshalMarshal(t *testing.T) {
 	input := `static_configs:
@@ -27,7 +34,7 @@ func TestConfigsCustomUnMarshalMarshal(t *testing.T) {
   - bar:4321
 `
 	cfg := &Configs{}
-	err := yaml.UnmarshalStrict([]byte(input), cfg)
+	err := unmarshalStrict([]byte(input), cfg)
 	require.NoError(t, err)
 
 	output, err := yaml.Marshal(cfg)

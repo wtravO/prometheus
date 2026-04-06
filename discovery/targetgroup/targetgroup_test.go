@@ -19,7 +19,7 @@ import (
 
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 )
 
 func TestTargetGroupStrictJSONUnmarshal(t *testing.T) {
@@ -169,7 +169,12 @@ func TestTargetGroupYamlUnmarshal(t *testing.T) {
 	for _, test := range tests {
 		tg := Group{}
 		actual := tg.UnmarshalYAML(unmarshal([]byte(test.yaml)))
-		require.Equal(t, test.expectedReply, actual)
+		if test.expectedReply != nil {
+			var typeErr *yaml.TypeError
+			require.ErrorAs(t, actual, &typeErr)
+		} else {
+			require.Equal(t, test.expectedReply, actual)
+		}
 		require.Equal(t, test.expectedGroup, tg)
 	}
 }

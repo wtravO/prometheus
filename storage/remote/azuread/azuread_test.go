@@ -14,6 +14,7 @@
 package azuread
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"os"
@@ -28,8 +29,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 )
+
+func unmarshalStrict(in []byte, out interface{}) error {
+	dec := yaml.NewDecoder(bytes.NewReader(in))
+	dec.KnownFields(true)
+	return dec.Decode(out)
+}
 
 const (
 	dummyAudience     = "dummyAudience"
@@ -142,7 +149,7 @@ func loadAzureAdConfig(filename string) (*AzureADConfig, error) {
 		return nil, err
 	}
 	cfg := AzureADConfig{}
-	if err = yaml.UnmarshalStrict(content, &cfg); err != nil {
+	if err = unmarshalStrict(content, &cfg); err != nil {
 		return nil, err
 	}
 	return &cfg, nil

@@ -14,6 +14,7 @@
 package ovhcloud
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"testing"
@@ -22,10 +23,16 @@ import (
 	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/prometheus/prometheus/discovery"
 )
+
+func unmarshalStrict(in []byte, out interface{}) error {
+	dec := yaml.NewDecoder(bytes.NewReader(in))
+	dec.KnownFields(true)
+	return dec.Decode(out)
+}
 
 var (
 	ovhcloudApplicationKeyTest    = "TDPKJdwZwAQPwKX2"
@@ -52,7 +59,7 @@ service: %s
 
 func getMockConfFromString(confString string) (SDConfig, error) {
 	var conf SDConfig
-	err := yaml.UnmarshalStrict([]byte(confString), &conf)
+	err := unmarshalStrict([]byte(confString), &conf)
 	return conf, err
 }
 

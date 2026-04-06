@@ -24,7 +24,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
-	"go.yaml.in/yaml/v2"
 )
 
 func TestOvhcloudDedicatedServerRefresh(t *testing.T) {
@@ -40,7 +39,7 @@ application_key: %s
 application_secret: %s
 consumer_key: %s`, mock.URL, ovhcloudApplicationKeyTest, ovhcloudApplicationSecretTest, ovhcloudConsumerKeyTest)
 
-	require.NoError(t, yaml.UnmarshalStrict([]byte(cfgString), &cfg))
+	require.NoError(t, unmarshalStrict([]byte(cfgString), &cfg))
 	d, err := newRefresher(&cfg, promslog.NewNopLogger())
 	require.NoError(t, err)
 	ctx := context.Background()

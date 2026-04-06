@@ -14,6 +14,7 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -34,7 +35,7 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/otlptranslator"
 	"github.com/prometheus/sigv4"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/model/labels"
@@ -42,6 +43,14 @@ import (
 	"github.com/prometheus/prometheus/storage/remote/azuread"
 	"github.com/prometheus/prometheus/storage/remote/googleiam"
 )
+
+// unmarshalStrict unmarshals YAML data into out, failing if any unknown fields are found.
+// This replaces yaml.UnmarshalStrict which was removed in yaml/v3.
+func unmarshalStrict(in []byte, out interface{}) error {
+	dec := yaml.NewDecoder(bytes.NewReader(in))
+	dec.KnownFields(true)
+	return dec.Decode(out)
+}
 
 var (
 	patRulePath     = regexp.MustCompile(`^[^*]*(\*[^/]*)?$`)
@@ -78,7 +87,7 @@ func Load(s string, logger *slog.Logger) (*Config, error) {
 	// point as well.
 	*cfg = DefaultConfig
 
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
+	err := unmarshalStrict([]byte(s), cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +378,7 @@ func (c *Config) GetScrapeConfigs() ([]*ScrapeConfig, error) {
 			if err != nil {
 				return nil, fileErr(filename, err)
 			}
-			err = yaml.UnmarshalStrict(content, &cfg)
+			err = unmarshalStrict(content, &cfg)
 			if err != nil {
 				return nil, fileErr(filename, err)
 			}

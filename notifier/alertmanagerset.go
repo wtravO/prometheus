@@ -23,7 +23,7 @@ import (
 
 	config_util "github.com/prometheus/common/config"
 	"github.com/prometheus/sigv4"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"

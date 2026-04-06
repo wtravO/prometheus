@@ -36,7 +36,7 @@ import (
 	"github.com/prometheus/common/promslog"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/atomic"
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
@@ -45,6 +45,13 @@ import (
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/model/relabel"
 )
+
+// unmarshalStrict unmarshals YAML data into out, failing if any unknown fields are found.
+func unmarshalStrict(in []byte, out interface{}) error {
+	dec := yaml.NewDecoder(bytes.NewReader(in))
+	dec.KnownFields(true)
+	return dec.Decode(out)
+}
 
 func alertsEqual(a, b []*Alert) error {
 	if len(a) != len(b) {
@@ -608,7 +615,7 @@ alerting:
   alertmanagers:
   - static_configs:
 `
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
+	err := unmarshalStrict([]byte(s), cfg)
 	require.NoError(t, err, "Unable to load YAML config.")
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
@@ -659,7 +666,7 @@ alerting:
         regex: 'alertmanager:9093'
         action: drop
 `
-	err := yaml.UnmarshalStrict([]byte(s), cfg)
+	err := unmarshalStrict([]byte(s), cfg)
 	require.NoError(t, err, "Unable to load YAML config.")
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
@@ -1044,7 +1051,7 @@ alerting:
       - foo.json
 `
 	// 1. Ensure known alertmanagers are not dropped during ApplyConfig.
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 1)
 
 	// First, apply the config and reload.
@@ -1070,7 +1077,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
 	require.NoError(t, n.ApplyConfig(cfg))
@@ -1093,7 +1100,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
 	require.NoError(t, n.ApplyConfig(cfg))
@@ -1120,7 +1127,7 @@ alerting:
       regex: 'doesntmatter:1234'
       action: drop
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.Len(t, cfg.AlertingConfig.AlertmanagerConfigs, 2)
 
 	require.NoError(t, n.ApplyConfig(cfg))
@@ -1328,7 +1335,7 @@ alerting:
     - files:
       - bar.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.NoError(t, n.ApplyConfig(cfg))
 
 	// Reload with target groups to discover alertmanagers.
@@ -1379,7 +1386,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.NoError(t, n.ApplyConfig(cfg))
 
 	// CRITICAL CHECK: After ApplyConfig but BEFORE reload, the sendLoops should
@@ -1435,7 +1442,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.NoError(t, n.ApplyConfig(cfg))
 
 	targetGroup := &targetgroup.Group{
@@ -1460,7 +1467,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.NoError(t, n.ApplyConfig(cfg))
 
 	// Reload with target groups for both configs - same alertmanager URL for both.
@@ -1508,7 +1515,7 @@ alerting:
     - files:
       - foo.json
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.NoError(t, n.ApplyConfig(cfg))
 
 	targetGroup := &targetgroup.Group{
@@ -1536,7 +1543,7 @@ alerting:
       - foo.json
     path_prefix: /changed
 `
-	require.NoError(t, yaml.UnmarshalStrict([]byte(s), cfg))
+	require.NoError(t, unmarshalStrict([]byte(s), cfg))
 	require.NoError(t, n.ApplyConfig(cfg))
 
 	// The old sendLoop should have been stopped since hash changed.
